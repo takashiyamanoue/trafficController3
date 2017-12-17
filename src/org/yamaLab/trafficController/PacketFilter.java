@@ -259,32 +259,7 @@ private ParsePacket exec(Packet p,Map<MacAddressKey, MacAddrTableElement> mt) {
 	if(!pp.succeeded) return null;
 //	ptime=(new Date()).toString();
 //	long n=pp.packet.getFrameNumber();
-    try {
-        DhcpInformation dhcpI=new DhcpInformation(pp);
-        if(dhcpI.dhcp) {
-		       String key=pp.getSourceMacString();
-//		       String ip1="\""+dnsI.getARecordAddress()+"\"";
-//		       String ip2="\""+dnsI.dnsServerIPs+"\"";
-		       String tx=pp.getTimeS();			       
-		       this.dhcpHistory.putMacDhcpRecord(pp.getSourceMacString(),
-		    		   "\""+tx+"\" "+this.interfaceNumber +" \""
-		            +pp.getSourceMacString()+"\" \""+pp.getSourceIpString()+"\" \""
-		    		+pp.getDestinationMacString()+"\" \""+pp.getDestinationIpString()+"\" \""
-		            +dhcpI.getUserIP()+"\" \""
-		            +dhcpI.getReceiverIP()+"\" \""
-		            +dhcpI.getServerIP()+"\" \""
-		            +dhcpI.getGatewayIP()+"\" \""
-		            +dhcpI.getUserMac()+"\" \""
-		            +dhcpI.getOption()+"\""	            
-		            );
-        }
-      }
-      catch(Exception e) {
-		System.out.println("PacketFilter.exec.dhcp error:"+e.toString());
-		Thread.dumpStack();
-		return null;			    
-     }	
-    this.collectBroadcastAddress(pp);
+
 	if(this.isToTheSameSideIO(pp,mt)) return null;
 	for(int i=0;i<filters.size();i++){
 		Filter f=filters.elementAt(i);
@@ -366,7 +341,35 @@ private ParsePacket exec(Packet p,Map<MacAddressKey, MacAddrTableElement> mt) {
 				return null;			  
 			  
 		  }
+		    try {
+		        DhcpInformation dhcpI=new DhcpInformation(pp);
+		        if(dhcpI.dhcp) {
+				       String key=pp.getSourceMacString();
+//				       String ip1="\""+dnsI.getARecordAddress()+"\"";
+//				       String ip2="\""+dnsI.dnsServerIPs+"\"";
+				       String tx=pp.getTimeS();	
+				       String line=
 
+				    		   "\""+tx+"\" "+this.interfaceNumber +" \""
+				            +pp.getSourceMacString()+"\" \""+pp.getSourceIpString()+"\" \""
+				    		+pp.getDestinationMacString()+"\" \""+pp.getDestinationIpString()+"\" \""
+				            +dhcpI.getUserIP()+"\" \""
+				            +dhcpI.getReceiverIP()+"\" \""
+				            +dhcpI.getServerIP()+"\" \""
+				            +dhcpI.getGatewayIP()+"\" \""
+				            +dhcpI.getUserMac()+"\" \""
+				            +dhcpI.getOption()+"\"";	            
+				            
+					       this.dhcpHistory.putMacDhcpRecord(pp.getSourceMacString(),line);			            
+//					       System.out.println("dhcp-line="+line);
+		        }
+		      }
+		      catch(Exception e) {
+				System.out.println("PacketFilter.exec.dhcp error:"+e.toString());
+				Thread.dumpStack();
+				return null;			    
+		     }	
+		    this.collectBroadcastAddress(pp);
       }
    	  if(pp.ipv6!=null) {
 		  try {
@@ -1707,7 +1710,7 @@ boolean isInChars(char x, char[] y){
 		byte[] serverIP=new byte[4];
 		byte[] gatewayIP=new byte[4];		
 		byte[] serverMac=new byte[6];
-		byte[] option=new byte[64];
+		byte[] option;
 		int optionPointer;
 		ParsePacket parsePacket;
 		class OptionX implements dhcpOptionInterface{
@@ -1719,6 +1722,7 @@ boolean isInChars(char x, char[] y){
             	optionNumber=onumber;
             }
 			public boolean parse(){
+				int osize=option.length;
 				try {
 				  if((0xff & option[optionPointer])==0xff) return false;
 				  if(!((0xff & option[optionPointer])==optionNumber)) return false;
@@ -1727,8 +1731,7 @@ boolean isInChars(char x, char[] y){
 				  optionValue=new byte[len];
 				  optionPointer++;
 				  for(int i=0;i<len;i++){
-					if(optionPointer>=64) return false;
-					if((0xff & option[optionPointer])==0xff) return true;
+					if(optionPointer>=osize) return false;
 					optionValue[i]=option[optionPointer];
 					optionPointer++;
 				  }
@@ -1749,6 +1752,7 @@ boolean isInChars(char x, char[] y){
             	super(oname,onumber);
             }
 			public boolean parse(){
+				int osize=option.length;
 				try {
 				  if((0xff & option[optionPointer])==0xff) return false;
 				  optionNumber=option[optionPointer];
@@ -1757,8 +1761,7 @@ boolean isInChars(char x, char[] y){
 				  optionValue=new byte[len];
 				  optionPointer++;
 				  for(int i=0;i<len;i++){
-					if(optionPointer>=64) return false;
-					if((0xff & option[optionPointer])==0xff) return true;
+					if(optionPointer>=osize) return false;
 					optionValue[i]=option[optionPointer];
 					optionPointer++;
 				  }
@@ -1778,7 +1781,7 @@ boolean isInChars(char x, char[] y){
 			public String toString(){
 				try{
 				  InetAddress a=InetAddress.getByAddress(optionValue);
-				  return optionName+"=\""+a.toString()+"\"";
+				  return optionName+"="+(a.toString()).substring(1);
 				}
 				catch(Exception e){
 					System.out.println("PacketFilter.DhcpInformation.subnetOption e="+e);
@@ -1794,6 +1797,7 @@ boolean isInChars(char x, char[] y){
 
 			public String toString(){
 				String rtn=new String(optionValue);
+				rtn=rtn.replaceAll(" ", "_");
 				return optionName+"="+rtn;
 			}						
 		}
@@ -1857,10 +1861,12 @@ boolean isInChars(char x, char[] y){
 			optionClasses.put(new Integer(51), new OptionX("ipAddressLeaseTime",51));			
 			optionClasses.put(new Integer(53), new DHCPMessageOption("dhcpMessageOption",53));
 			optionClasses.put(new Integer(54), new IPAddressOption("serverIdentifier",54));
+			optionClasses.put(new Integer(55), new OptionX("parameterList",55));			
 			optionClasses.put(new Integer(58), new OptionX("renewTimeValue",58));
 			optionClasses.put(new Integer(59), new OptionX("rebidingTimeValue",59));
 			optionClasses.put(new Integer(60), new StringOption("classIdentfier",60));			
 			optionClasses.put(new Integer(61), new OptionX("clientIdentifiler",61));
+			optionClasses.put(new Integer(81), new StringOption("clientFqdn",81));			
 			
 			Packet payload=p.payload;
 		   	byte[] bytePayload=payload.getRawData();
@@ -1886,12 +1892,9 @@ boolean isInChars(char x, char[] y){
 				System.out.println("PacketFilter.Dhcp error-1:"+e);				
 			}
 			try {
-			int n=64;
 			int payloadSize=bytePayload.length;
-			if(payloadSize>300) {
-				n=payloadSize-236;
-				if(n>64)n=64;
-			}		
+			int n=payloadSize-236;
+			option=new byte[n];
 			for(int i=0;i<n;i++) {
 				option[i]=bytePayload[236+i];
 			}			
@@ -1964,11 +1967,13 @@ boolean isInChars(char x, char[] y){
 		}	
 		public String getOption() {
 			/* */
+//			String hexoption=SBUtil.byteArray2hex2(option);
 			String rtn="";
 			int on=0;
+			int osize=option.length;
 			dhcpOptionInterface dmo=null;
 			try {
-			if(!confirmOptionHead()) return "*";
+			if(!confirmOptionHead()) return "-";
 			rtn="";
 			on=(0xff & option[optionPointer]);
 			dmo=optionClasses.get(new Integer(on));
@@ -1982,7 +1987,10 @@ boolean isInChars(char x, char[] y){
 			on=option[optionPointer];
 			boolean flag=true;
 			while((0xff & on)!=0xff){
-				if(optionPointer>=64) return rtn;
+				if(on==60) {
+					System.out.println("classIdentifiler");
+				}
+				if(optionPointer>=osize) return rtn;
 				if(!flag) return rtn;
 				try {
 				  rtn=rtn+",";
