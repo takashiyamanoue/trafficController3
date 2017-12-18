@@ -255,7 +255,7 @@ public class ParsePacket {
 		            ",dmac="+arph.getDstHardwareAddr().toString()+
 		            ",dipa="+destinationIpString;
 		states[0]=payloadString;	
-		return payloadString;
+		return payloadString.replaceAll(" ", "_");
 	}
 	public String getL4String() {
 		if(l4String!=null) {

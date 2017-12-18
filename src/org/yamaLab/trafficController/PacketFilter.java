@@ -2005,9 +2005,11 @@ boolean isInChars(char x, char[] y){
 			on=option[optionPointer];
 			boolean flag=true;
 			while((0xff & on)!=0xff){
+				/*
 				if(on==60) {
 					System.out.println("classIdentifiler");
 				}
+				*/
 				if(optionPointer>=osize) return rtn;
 				if(!flag) return rtn;
 				try {

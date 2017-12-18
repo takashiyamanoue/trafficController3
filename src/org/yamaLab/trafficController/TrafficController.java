@@ -1467,7 +1467,11 @@ public class TrafficController extends JFrame implements CommandReceiver, Runnab
 		String [] rest=new String[1];
 		String [] match=new String[1];
 		String[] param1=new String[1];
-		String[] param2=new String[2];		
+		String[] param2=new String[2];	
+		long time=System.currentTimeMillis();		
+		DateFormat df=new SimpleDateFormat("yyyy/MM/dd HH:mm:ss Z");
+	    String timex=""+df.format(new Date(time));		
+		
 //		System.out.println(TAG+"parseCommand("+x+","+v+")");
 //	   	service.parseCommand("guiMessage",x);
 		int [] intv = new int[1];
@@ -1553,6 +1557,8 @@ public class TrafficController extends JFrame implements CommandReceiver, Runnab
 			}			
 						
 		}
+	    String line= "\""+timex+"\", error, command=\""+subcmd+"\"";
+		parseApplicationCommand("pjc","wikiPutSendBuffer",line);		
 		return "ERROR";
 
 	}
@@ -1726,7 +1732,7 @@ public class TrafficController extends JFrame implements CommandReceiver, Runnab
      		   String dmac=st.nextToken();
      		   String dip=st.nextToken();
                String arpx=st.nextToken();
-     		   String arpLine="cmd=get dhcp-list, date=\""+time+
+     		   String arpLine="cmd=get arp-list, date=\""+time+
      				   "\", nif="+nif+
      				   ", smac="+smac+", sip="+sip+", dmac="+dmac+", dip="+dip+
      				   ", arp="+arpx+
