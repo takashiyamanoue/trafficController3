@@ -236,6 +236,7 @@ private void collectBroadcastAddress(ParsePacket p) {
 				broadcastAddressList=new Vector();
 			}
 			broadcastAddressList.add(ip);
+//			System.out.println("put broadcast address:"+ip);
 		}
 	}
 	
@@ -290,6 +291,22 @@ private ParsePacket exec(Packet p,Map<MacAddressKey, MacAddrTableElement> mt) {
 				Thread.dumpStack();
 				return null;			  
 		  }
+		  try {
+		       String tx=pp.getTimeS();	
+		       String line= "\""+tx+"\" " +this.interfaceNumber +" \""
+			        +pp.getSourceMacString()+"\" \""
+		    		+pp.getSourceIpString()+"\" \""
+			        +pp.getDestinationMacString()+"\" \""
+			        +pp.getDestinationIpString()+"\" \""
+		    		+pp.getArpString() +"\"";
+			   arpHistory.putMacDhcpRecord(pp.getSourceMacString(), line);
+		  }
+		  catch(Exception e) {
+				System.out.println("PacketFilter.exec.arp-2 error:"+e.toString());
+				Thread.dumpStack();
+				return null;			  
+		  }
+		  
 	  }
    	  /*
 	  if(pp.packet.hasHeader(pp.ip)){
@@ -1695,6 +1712,7 @@ boolean isInChars(char x, char[] y){
 	}
 	
 	public TrafficHistory dhcpHistory =new TrafficHistory();
+	public TrafficHistory arpHistory = new TrafficHistory();
 	interface dhcpOptionInterface {
 		public boolean parse();
 		public String toString();

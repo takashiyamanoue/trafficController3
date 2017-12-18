@@ -1546,7 +1546,12 @@ public class TrafficController extends JFrame implements CommandReceiver, Runnab
 				this.getDhcpList();
 				return "OK";
 			}			
-			
+			else
+			if(Util.parseKeyWord(l, "arp-list", rest)) {
+				this.getArpList();
+				return "OK";
+			}			
+						
 		}
 		return "ERROR";
 
@@ -1701,6 +1706,39 @@ public class TrafficController extends JFrame implements CommandReceiver, Runnab
 		writeDhcpList(this.wan2Lan.dhcpHistory);
 		writeDhcpList(this.lan2Wan.dhcpHistory);
 	}	
+	private void writeArpList(TrafficHistory arpH) {
+        if(arpH==null) return;
+        Vector<String> arpList=arpH.serialize();
+        for(int i=0;i<arpList.size();i++) {
+     		   String arpRecord=arpList.elementAt(i);
+     		   if(arpRecord==null) continue;
+     		   String [] rest=new String[1];
+     		   String [] timea=new String[1];
+     		   arpRecord=Util.skipSpace(arpRecord);
+     		   if(!Util.parseStrConst(arpRecord, timea, rest)) continue;
+     		   String time=timea[0];
+     		   arpRecord=rest[0];
+      		   arpRecord=Util.skipSpace(arpRecord);     		   
+     		   StringTokenizer st=new StringTokenizer(arpRecord);
+     		   String nif=st.nextToken();
+     		   String smac=st.nextToken();
+     		   String sip=st.nextToken();
+     		   String dmac=st.nextToken();
+     		   String dip=st.nextToken();
+               String arpx=st.nextToken();
+     		   String arpLine="cmd=get dhcp-list, date=\""+time+
+     				   "\", nif="+nif+
+     				   ", smac="+smac+", sip="+sip+", dmac="+dmac+", dip="+dip+
+     				   ", arp="+arpx+
+     				   ".\n";
+     		   parseApplicationCommand("pjc","wikiPutSendBuffer",arpLine);
+        }
+		
+	}
+	private void getArpList() {
+		writeArpList(this.wan2Lan.arpHistory);
+		writeArpList(this.lan2Wan.arpHistory);
+	}		
 	private void getRepeatingTrafficOver(int x, BooleanFunctionInterface f) {
 		if(x<10000) x=10000;
 		for(String macAddr: this.hostsInformation.keySet() ) {

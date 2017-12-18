@@ -239,18 +239,21 @@ public class ParsePacket {
 		return ipString;
 	}	
 	
-	private String getArpString() {
+	public String getArpString() {
 		if(arp!=null) {
 			if(!payloadString.equals("")) {
 				return payloadString;
 			}
 		}
 		if(arph==null) return "";
-		   payloadString=arph.getHardwareType().toString()+" "+
-		            arph.getOperation().toString()+" "+
-			        arph.getProtocolType().toString()+" "+
-		            " spa-"+sourceIpString+
-		            " tpa-"+destinationIpString;
+		   payloadString=
+		            "oparation="+arph.getOperation().toString()+
+			        ",ptype="+arph.getProtocolType().toString()+
+		            ",htype="+arph.getHardwareType().toString()+
+		            ",smac="+arph.getSrcHardwareAddr().toString()+
+		            ",sipa="+sourceIpString+
+		            ",dmac="+arph.getDstHardwareAddr().toString()+
+		            ",dipa="+destinationIpString;
 		states[0]=payloadString;	
 		return payloadString;
 	}
